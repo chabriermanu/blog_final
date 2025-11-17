@@ -1,0 +1,13 @@
+# Fichiers de configuration sensibles
+config.php
+
+# Fichiers uploadés par les utilisateurs
+uploads/*
+!uploads/.gitkeep
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

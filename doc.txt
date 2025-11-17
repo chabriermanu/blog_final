@@ -1,0 +1,163 @@
+===============================================
+LISTE DES EMOJIS - CATÉGORIES BLOG
+===============================================
+
+💥  Action
+🗺️  Aventure
+😂  Comédie
+🎭  Drame
+🚀  Science-Fiction
+✨  Fantastique
+👻  Horreur
+🔪  Thriller
+🔍  Policier
+💕  Romance
+📺  Sitcom
+🎒  Teen Drama
+⚕️  Médical
+⚖️  Juridique
+🕵️  Espionnage
+🤠  Western
+🎨  Animation
+🦸  Super-héros
+🤖  Robots/Mecha
+🌟  Magical Girl
+👶  Enfants
+🌌  Space Opera
+👽  Surnaturel
+⚽  Sport
+🥋  Arts Martiaux
+📜  Historique
+☢️  Post-Apocalyptique
+
+===============================================
+PALETTE DE COULEURS
+===============================================
+
+#dc3545  Rouge        Action, Arts Martiaux
+#fd7e14  Orange       Aventure
+#ffc107  Jaune        Comédie
+#6c757d  Gris         Drame
+#0dcaf0  Cyan         Science-Fiction
+#9b59b6  Violet       Fantastique
+#212529  Noir         Horreur
+#6f42c1  Violet foncé Thriller
+#495057  Gris foncé   Policier
+#f8a5c2  Rose         Romance
+#20c997  Vert clair   Sitcom
+#e83e8c  Rose foncé   Teen Drama
+#198754  Vert         Médical
+#0d6efd  Bleu         Juridique
+#343a40  Gris très foncé Espionnage
+#8b4513  Marron       Western
+#ff6b6b  Rouge clair  Animation
+#0066cc  Bleu foncé   Super-héros
+#607d8b  Gris bleu    Robots/Mecha
+#ff69b4  Rose vif     Magical Girl
+#ffeb3b  Jaune vif    Enfants
+#4a148c  Violet très foncé Space Opera
+#7e57c2  Violet moyen Surnaturel
+#ff9800  Orange vif   Sport
+#d32f2f  Rouge foncé  Arts Martiaux
+#795548  Marron       Historique
+#424242  Gris anthracite Post-Apocalyptique
+
+session_regenerate_id(true);  // ✅ Régénère l'ID de session à chaque connexion
+
+Stockage complet des infos utilisateur
+php$_SESSION['user'] = [
+    'id'     => $user['id_user'],
+    'email'  => $user['email'],
+    'pseudo' => $user['pseudo'],
+    'type'   => $user['type_user'],  // ✅ Permet de différencier auteur/lecteur
+    'avatar' => $user['avatar'] ?? null
+];
+
+3. Gestion de redirection après login
+phpif (!empty($_SESSION['redirect_after_login'])) 
+    $redirect = $_SESSION['redirect_after_login'];
+    unset($_SESSION['redirect_after_login']);
+    header("Location: $redirect");
+    exit;
+
+bindValue- Elle remplace le marqueur :limit dans ta requête SQL par la valeur réelle de $limit. - protège contre les injections SQL,  garantit que la requête est bien préparée,
+même si $limit vient d’un formulaire ou d’une source externe. PDO devinera que c’est un entier. Mais en mettant PDO::PARAM_INT, tu es plus explicite.
+//////////////////////////////////////////////////////
+COALESCE est une sécurité pour éviter les NULL dans tes résultats SQL. IFNULL = version simplifiée, spécifique à MySQL, seulement 2 arguments.
+//////////////////////////////////////////
+endif; est une syntaxe alternative en PHP pour fermer un bloc if. C'est particulièrement utile quand tu mélanges PHP et HTML. Problème : Les accolades { } peuvent être
+ difficiles à lire quand il y a beaucoup de HTML entre les balises PHP. Avantage : C'est beaucoup plus lisible ! On voit clairement où commence et finit la condition. Règle simple
+Si tu écris du PHP pur → Utilise les accolades { }
+Si tu mélanges PHP + HTML → Utilise if(): endif; (plus lisible)
+🔄 endforeach; - C'est pareil que endif; !
+C'est la syntaxe alternative pour fermer une boucle foreach quand tu mélanges PHP et HTML.
+endfor; → ferme un for
+endwhile; → ferme un while
+////////////////////////////////////////////////////////////////////////////////////////
+🔍 $chunked_posts - Découpage des articles en groupesC'est une variable qui découpe le tableau d'articles en petits groupes pour le carousel Bootstrap. 📋 Résumé
+VariableContenu$postsTous les articles (tableau simple)$chunked_postsArticles découpés en groupes de 3 (tableau de tableaux)
+
+<i class="bi bi-chevron-left text-white fs-3"></i>
+   │    │  └─────────────┘ └────────┘ └──┘
+   │    │         │             │        │
+   │    │    Nom icône      Couleur   Taille
+   │    │
+   │  Préfixe obligatoire
+   │
+Balise pour icône
+
+0755Permissions : Lecture/écriture pour toi, lecture seule pour les autres
+
+$allowedTypes :  c'est important ?
+Sans cette vérification (❌ DANGEREUX)
+Un utilisateur malveillant pourrait uploader :
+
+💀 Fichiers PHP (script malveillant) → hack.php
+🦠 Fichiers exécutables → virus.exe
+📄 N'importe quoi → document.pdf, video.mp4
+
+Résultat : Ton serveur pourrait être piraté ! 🚨
+
+C'est quoi un "type MIME" ?
+Chaque fichier a un type MIME qui indique son format :
+FichierExtensionType MIMEPhoto JPEG.jpg ou .jpegimage/jpegImage PNG.pngimage/pngGIF animé.gifimage/gifImage WebP.webpimage/webpFichier
+ PHP.phpapplication/x-httpd-phpPDF.pdfapplication/pdfVidéo MP4.mp4video/mp4
+
+ in_array() Vérifie si une valeur existe dans un tableau
+
+ if ($_SERVER['REQUEST_METHOD'] === 'POST') Cette ligne vérifie comment la page a été appelée : par un formulaire soumis (POST) ou par un simple clic (GET).
+ La vraie bonne alternative serait !empty($_POST), mais REQUEST_METHOD reste plus clair et professionnel ! 🚀
+ //////////////////////////////////////////////////////////////////////////////////////
+ Que fait COALESCE ?
+C’est une fonction SQL qui renvoie la première valeur non-NULL parmi une liste d’expressions.
+
+Si toutes les valeurs sont NULL, elle renvoie NULL. 
+Pourquoi c’est utile ?
+Simplifie la gestion des données manquantes.
+Permet de définir une valeur par défaut (ex. 'Pas de téléphone').
+Très pratique pour les rapports, la préparation de données et les affichages utilisateurs.
+COALESCE, ISNULL et NVL servent tous à gérer les valeurs NULL
+
+ISNULL (SQL Server spécifique)
+
+Fonction propre à SQL Server.
+
+Remplace une seule expression NULL par une valeur donnée.
+
+Ne prend que deux arguments : l’expression et la valeur de remplacement.
+
+NVL (Oracle spécifique)
+
+Fonction propre à Oracle.
+
+Comme ISNULL, elle prend deux arguments : une expression et une valeur de remplacement.
+
+🌟 Points à retenir
+COALESCE est le plus portable car il fait partie de la norme SQL.
+
+ISNULL est plus limité mais parfois plus performant dans SQL Server.
+
+NVL est l’équivalent d’ISNULL dans Oracle.
+
+Pour un code réutilisable entre plusieurs bases, privilégiez COALESCE.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,143 @@
+/* Espacement pour la navbar fixed */
+body {
+    padding-top: 70px;
+}
+
+/* Wrapper du carousel */
+.carousel-wrapper {
+    position: relative;
+    padding: 0 100px; /* Espace pour les boutons */
+}
+
+/* Boutons du carousel personnalisés */
+.custom-carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    z-index: 10;
+    border: none;
+    background: none;
+}
+
+.custom-carousel-btn.carousel-control-prev {
+    left: 0;
+}
+
+.custom-carousel-btn.carousel-control-next {
+    right: 0;
+}
+
+/* Style des icônes des boutons */
+.carousel-btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background-color: #000;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.custom-carousel-btn:hover .carousel-btn-icon {
+    background-color: #0d6efd;
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(13, 110, 253, 0.4);
+}
+
+/* ========================================
+   CARTES D'ARTICLES
+   ======================================== */
+
+/* Carte article */
+.article-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.article-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25) !important;
+}
+
+/* Conteneur de l'image */
+.card-img-container {
+    height: 220px;
+    width: 100%;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+/* Image de l'article */
+.article-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.3s ease;
+}
+
+/* Zoom au hover */
+.article-card:hover .article-img {
+    transform: scale(1.1);
+}
+
+/* Pour les images par défaut (icône) */
+.article-img.bg-secondary {
+    object-fit: contain;
+}
+
+/* Avatar auteur */
+.author-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border: 2px solid #0d6efd;
+}
+
+.author-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+}
+
+/*  RESPONSIVE*/
+/* Tablette */
+@media (max-width: 992px) {
+    .carousel-wrapper {
+        padding: 0 80px;
+    }
+    
+    .custom-carousel-btn {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .carousel-btn-icon {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .carousel-wrapper {
+        padding: 0 20px;
+    }
+    
+    .custom-carousel-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .carousel-btn-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .carousel-btn-icon i {
+        font-size: 1.5rem !important;
+    }
+}
