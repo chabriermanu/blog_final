@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "function.php";
+require_once "includes/functions.php";
 
 // Protection auteur
 if (!isset($_SESSION['user']) || $_SESSION['user']['type'] !== 'auteur') {
@@ -70,7 +70,7 @@ if (isset($_POST['submit'])) {
 
                 if ($id) {
                     // ✅ Ajout des catégories sélectionnées
-                    $categoriesAdded = getAllCategories($id, $_POST['categories']);
+                    $categoriesAdded = updateArticleCategories($id, $_POST['categories']);
                     if ($categoriesAdded) {
                         header("Location: singleArticle.php?id=$id&success=created");
                         exit;

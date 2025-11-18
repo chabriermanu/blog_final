@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "function.php";
+require_once "includes/functions.php";
 
 // Récupérer l'article
 $id_article = (int)($_GET['id'] ?? 0);
@@ -62,19 +62,23 @@ require_once "header.php";
     </article>
 
  <!-- ✅ Affichage des catégories -->
-<?php 
-if (!empty($categories)):
-?>
+<?php if (!empty($categories)): ?>
 <div class="mb-2">
     <?php foreach ($categories as $categorie): ?>
-        <span class="badge" style="background-color: <?= htmlspecialchars($categorie['couleur']) ?>; color: white;"><?= htmlspecialchars($categorie['nom_categorie']) ?></span>
-            <?php endforeach; ?>
+        <a href="categorie.php?id=<?= $categorie['id_categorie'] ?>" 
+           class="badge" 
+           style="background-color: <?= htmlspecialchars($categorie['couleur']) ?>; color: white; text-decoration: none;">
+            <?= htmlspecialchars($categorie['nom_categorie']) ?>
+        </a>
+    <?php endforeach; ?>
 </div>
-
 <?php endif; ?>
-    <!-- Boutons d'action pour l'auteur -->
+ 
      
-<?php if (isset($_SESSION['user']) && $_SESSION['user']['pseudo'] === $article['auteur']): ?>
+<!-- Boutons d'action pour l'auteur -->
+<?php if (isset($_SESSION['user']) && 
+          $_SESSION['user']['type'] === 'auteur' && 
+          $_SESSION['user']['id'] === $article['id_user']): ?>
     <div class="d-flex gap-2 mb-4">
         <a href="updateArticle.php?id=<?= $article['id'] ?>" class="btn btn-warning">
             <i class="bi bi-pencil"></i> Modifier
@@ -156,7 +160,33 @@ if (!empty($categories)):
             </div>
         </div>
     </div>
- </div>    
+ </div>
+ <!-- Modal Suppression Article -->
+<div id="modalDeleteArticle" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cet article ?</p>
+                <p class="text-danger"><strong>Cette action est irréversible !</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="deleteArticle.php" style="display: inline;">
+                    <input type="hidden" name="id" value="<?= $article['id'] ?>">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>    
     <!-- Affichage des commentaires -->
     <?php if (!empty($commentaires)): ?>
         <div class="mt-5 mb-5">

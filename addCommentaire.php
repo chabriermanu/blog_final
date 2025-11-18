@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "function.php";
+require_once "includes/functions.php";
 
 // Vérification de la méthode POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

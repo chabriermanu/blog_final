@@ -1,10 +1,15 @@
 <?php
 session_start();
-require_once "function.php";
+require_once "includes/functions.php";
 
 // Vérifier que l'utilisateur est connecté
 if (!isset($_SESSION['user'])) {
     header('Location: login.php');
+    exit;
+}
+// ✅ AJOUTE ÇA : Vérifier que c'est un AUTEUR (pas un simple membre)
+if ($_SESSION['user']['type'] !== 'auteur') {
+    header('Location: index.php?error=unauthorized');
     exit;
 }
 
@@ -25,7 +30,7 @@ if (!$article) {
 }
 
 // Vérifier que l'utilisateur est bien l'auteur
-if ($_SESSION['user']['id'] !== $article['id_auteur']) {
+if ($_SESSION['user']['id'] !== $article['id_user']) {
     header('Location: article.php?id=' . $id . '&error=unauthorized');
     exit;
 }

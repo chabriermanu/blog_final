@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "function.php";
+require_once "includes/functions.php";
 
 // Protection auteur
 if (!isset($_SESSION['user']) || $_SESSION['user']['type'] !== 'auteur') {

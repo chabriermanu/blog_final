@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "function.php";
+require_once "includes/functions.php";
 
 // Seuls les auteurs ont accès
 if (!isset($_SESSION['user']) || $_SESSION['user']['type'] !== 'auteur') {
@@ -84,11 +84,36 @@ require_once "header.php";
                                    class="btn btn-sm btn-outline-warning">
                                     <i class="bi bi-pencil"></i> Modifier
                                 </a>
-                                <a href="deleteArticle.php?id=<?= $article['id_article'] ?>"
-                                   class="btn btn-sm btn-outline-danger"
-                                   onclick="return confirm('Supprimer cet article ?')">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalDelete<?= $article['id_article'] ?>">
                                     <i class="bi bi-trash"></i> Supprimer
-                                </a>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Modal de suppression pour cet article -->
+                        <div class="modal fade" id="modalDelete<?= $article['id_article'] ?>" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-exclamation-triangle"></i> Confirmer la suppression
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer l'article :</p>
+                                        <p><strong><?= htmlspecialchars($article['titre']) ?></strong></p>
+                                        <p class="text-danger">Cette action est irréversible !</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <form method="POST" action="deleteArticle.php" style="display: inline;">
+                                            <input type="hidden" name="id" value="<?= $article['id_article'] ?>">
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="bi bi-trash"></i> Supprimer définitivement
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
