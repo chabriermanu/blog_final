@@ -10,24 +10,28 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['type'] !== 'auteur') {
 
 $error = '';
 $success = '';
-// charger touts les catefories
+
+// ✅ Récupération de toutes les catégories
 $categories = getAllCategories();
 
 if (isset($_POST['submit'])) {
     // Validation des champs obligatoires
     if (
         empty($_POST['titre']) ||
-        empty($_POST['dateCreation']) ||  // ✅ Champ requis
+        empty($_POST['dateCreation']) ||
         empty($_POST['contenu'])
     ) {
         $error = "Tous les champs sont obligatoires.";
+    }
+    // ✅ Vérification qu'au moins une catégorie est sélectionnée
+    elseif (empty($_POST['categories'])) {
+        $error = "Veuillez sélectionner au moins une catégorie.";
     }
     // Vérification de l'image
     elseif (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
         $error = "Veuillez sélectionner une image valide.";
     } else {
         $image = $_FILES['image'];
-        //C'est une variable qui contient la liste des types de fichiers autorisés pour l'upload. C'est une protection de sécurité essentielle !
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $maxSize = 5 * 1024 * 1024; // 5 Mo
 
@@ -61,27 +65,29 @@ if (isset($_POST['submit'])) {
                     $dateParution,              // ✅ Aujourd'hui (automatique)
                     $_SESSION['user']['id'],
                     $uploadPath,
-                    $_POST['contenu'],
-                    $_POST['categorie'] 
+                    $_POST['contenu']
                 );
 
                 if ($id) {
-                    header("Location: singleArticle.php?id=$id&success=created");
-                    exit;
-                } else {
+                    // ✅ Ajout des catégories sélectionnées
+                    $categoriesAdded = getAllCategories($id, $_POST['categories']);
+                    if ($categoriesAdded) {
+                        header("Location: singleArticle.php?id=$id&success=created");
+                        exit;
+                    } else {
                     $error = "Erreur lors de la création de l'article.";
+                    }
+                } else {
+                    $error = "Erreur lors de l'upload de l'image.";
                 }
-            } else {
-                $error = "Erreur lors de l'upload de l'image.";
             }
         }
     }
 }
-
 require_once "header.php";
 ?>
 
-<div class="container mt-5">
+<<div class="container mt-5">
     <div class="card shadow-sm border-start border-primary rounded-4" style="max-width: 700px; margin: auto;">
         <div class="card-body">
             <h4 class="card-title text-center mb-4">📝 Ajouter un Article</h4>
@@ -93,22 +99,20 @@ require_once "header.php";
             <form method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="titre" class="form-label">Titre de l'article *</label>
-                    <input type="text" class="form-control" id="titre"  name="titre"  required  maxlength="255"  value="<?= htmlspecialchars($_POST['titre'] ?? '') ?>">
+                    <input type="text" class="form-control" id="titre" name="titre" required maxlength="255" value="<?= htmlspecialchars($_POST['titre'] ?? '') ?>">
                 </div>
 
-                <!-- ✅ DATE DE CRÉATION (choisie par l'auteur) -->
                 <div class="mb-3">
                     <label for="dateCreation" class="form-label">
                         Date de création *
                         <small class="text-muted">(Quand avez-vous rédigé cet article ?)</small>
                     </label>
-                    <input type="date" class="form-control" id="dateCreation" name="dateCreation" required max="<?= date('Y-m-d') ?>"value="<?= $_POST['dateCreation'] ?? date('Y-m-d') ?>">
+                    <input type="date" class="form-control" id="dateCreation" name="dateCreation" required max="<?= date('Y-m-d') ?>" value="<?= $_POST['dateCreation'] ?? date('Y-m-d') ?>">
                     <small class="form-text text-muted">
                         La date ne peut pas être dans le futur
                     </small>
                 </div>
 
-                <!-- ✅ DATE DE PARUTION (automatique = aujourd'hui) -->
                 <div class="mb-3">
                     <label for="dateParutionDisplay" class="form-label">
                         Date de parution
@@ -125,14 +129,42 @@ require_once "header.php";
                     <input type="text" id="auteur" class="form-control" value="<?= htmlspecialchars($_SESSION['user']['pseudo']) ?>" disabled>
                 </div>
 
+                <!-- ✅ SECTION CATÉGORIES -->
+                <div class="mb-3">
+                    <label class="form-label">Catégories * <small class="text-muted">(Sélectionnez au moins une catégorie)</small></label>
+                    <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                        <?php foreach ($categories as $categorie): ?>
+                            <div class="form-check mb-2">
+                                <input 
+                                    class="form-check-input" 
+                                    type="checkbox" 
+                                    name="categories[]" 
+                                    value="<?= $categorie['id_categorie'] ?>" 
+                                    id="cat_<?= $categorie['id_categorie'] ?>"
+                                    <?= (isset($_POST['categories']) && in_array($categorie['id_categorie'], $_POST['categories'])) ? 'checked' : '' ?>
+                                >
+                                <label class="form-check-label" for="cat_<?= $categorie['id_categorie'] ?>">
+                                    <?php if (!empty($categorie['avatar'])): ?>
+                                        <img src="<?= htmlspecialchars($categorie['avatar']) ?>" alt="" style="width: 20px; height: 20px; object-fit: cover; border-radius: 3px;">
+                                    <?php endif; ?>
+                                    <strong><?= htmlspecialchars($categorie['nom_categorie']) ?></strong>
+                                    <?php if (!empty($categorie['description'])): ?>
+                                        <small class="text-muted">- <?= htmlspecialchars($categorie['description']) ?></small>
+                                    <?php endif; ?>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
                 <div class="mb-3">
                     <label for="contenu" class="form-label">Contenu de l'article *</label>
-                    <textarea class="form-control" id="contenu" name="contenu" rows="10" required  placeholder="Rédigez votre article ici..."><?= htmlspecialchars($_POST['contenu'] ?? '') ?></textarea>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="10" required placeholder="Rédigez votre article ici..."><?= htmlspecialchars($_POST['contenu'] ?? '') ?></textarea>
                 </div>
 
                 <div class="mb-3">
                     <label for="image" class="form-label">Image de l'article *</label>
-                    <input type="file" class="form-control"id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" required>
+                    <input type="file" class="form-control" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp" required>
                     <small class="form-text text-muted">Formats acceptés : JPG, PNG, GIF, WEBP (Max : 5 Mo)</small>
                 </div>
 
@@ -144,20 +176,10 @@ require_once "header.php";
                         Annuler
                     </a>
                 </div>
-                <div class="mb-3">
-                    <label for="categorie" class="form-label">Catégorie *</label>
-                    <select class="form-select" id="categorie" name="categorie" required>
-                        <option value="">-- Choisir une catégorie --</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?= $cat['id_categorie'] ?>">
-                                <?= htmlspecialchars($cat['nom_categorie']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
             </form>
         </div>
     </div>
 </div>
+
 
 <?php require_once "footer.php"; ?>

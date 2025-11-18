@@ -30,7 +30,7 @@ require_once "header.php";
 
                 <div class="carousel-inner pb-5">
                     <?php foreach ($chunked_posts as $chunk_index => $chunk): ?>
-                        <article class="carousel-item <?= $chunk_index === 0 ? 'active' : '' ?>">
+                        <div class="carousel-item <?= $chunk_index === 0 ? 'active' : '' ?>">
                             <!-- ✅ Cartes centrées avec justify-content-center et max-width -->
                             <div class="row g-4 justify-content-center mx-auto" style="max-width: 1200px;">
                                 <?php foreach ($chunk as $post): ?>
@@ -38,9 +38,8 @@ require_once "header.php";
                                         <div class="card article-card shadow-lg border-0">
                                             <div class="card-img-container">
                                                 <?php if (!empty($post['picture'])): ?>
-                                                    <img src="<?= htmlspecialchars($post['picture']) ?>" 
-                                                         class="card-img-top article-img" 
-                                                         alt="<?= htmlspecialchars($post['titre']) ?>">
+                                                    <img src="<?= htmlspecialchars($post['picture']) ?>"class="card-img-top article-img" 
+                                                     style="max-height: 500px; object-fit: contain;"> alt="<?= htmlspecialchars($post['titre']) ?>">
                                                 <?php else: ?>
                                                     <div class="bg-gradient bg-secondary article-img d-flex align-items-center justify-content-center">
                                                         <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
@@ -85,7 +84,7 @@ require_once "header.php";
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-                        </article>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>

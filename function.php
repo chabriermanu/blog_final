@@ -42,16 +42,22 @@ function getLastPosts($limit = 10) {
 }
 function getCategoriesByArticle($id_article) {
     $dbh = dbconnect();
-    $stmt = $dbh->prepare("SELECT c.nom_categorie, c.couleur, c.avatar FROM categorie c JOIN appartenance a ON c.id_categorie = a.id_categorie WHERE a.id_article = :id_article");
-    $stmt->bindParam(':id_article', $id_article);
+    $stmt = $dbh->prepare(" SELECT c.id_categorie, c.nom_categorie, c.couleur, c.avatar, c.description
+        FROM categorie c
+        JOIN appartenance app ON c.id_categorie = app.id_categorie
+        WHERE app.id_article = :id_article
+        ORDER BY c.nom_categorie ASC
+    ");
+    $stmt->bindParam(':id_article', $id_article, PDO::PARAM_INT);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 function getAllCategories(){
-    $dbh = dbconnect();
-    $stmt = $dbh -> prepare("SELECT * FROM categorie ORDER BY nom_categorie ASC");
+    $dbh=dbconnect();
+    $stmt = $dbh->prepare("SELECT c.id_categorie, c.nom_categorie, c.description, c.avatar, c.couleur, COUNT(app.id_article) AS nb_articles FROM categorie c LEFT JOIN appartenance app ON c.id_categorie = app.id_categorie
+            GROUP BY c.id_categorie, c.nom_categorie, c.description, c.avatar, c.couleur ORDER BY c.nom_categorie ASC");
     $stmt->execute();
-    return $stmt ->fetchAll((PDO::FETCH_ASSOC));
+     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 function getAllArticle() {
     $dbh = dbconnect();
@@ -66,7 +72,7 @@ function getArticleById($id) {
                            COALESCE(a.contenu, '') AS contenu, COALESCE(u.pseudo, u.email, '') AS auteur FROM article a JOIN user u ON a.id_user = u.id_user WHERE a.id_article = :id ");
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
-    return $stmt->fetch(PDO::FETCH_ASSOC);  // Retourne l'article
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
  function getArticlesByUser($id_user) {
     $dbh = dbconnect();
@@ -84,8 +90,10 @@ function getArticleById($id) {
 function getCommentairesByArticle($id_article) {
     $dbh = dbconnect();
     try {
-        $stmt = $dbh->prepare("SELECT  c.*, COALESCE(u.pseudo, c.pseudo_visiteur) AS auteur_commentaire, u.avatar, CASE WHEN c.id_user IS NOT NULL THEN 'membre' ELSE 'visiteur' END AS type_auteur
-          FROM commentaire c LEFT JOIN user u ON c.id_user = u.id_user  WHERE c.id_article = :id_article  AND c.statut = 'approuve' ORDER BY c.date_commentaire DESC");
+        $stmt = $dbh->prepare(" SELECT c.id_commentaire, c.id_article, c.id_user, c.pseudo_visiteur, c.contenu, c.date_parution as date_commentaire,  COALESCE(u.pseudo, c.pseudo_visiteur) AS auteur_commentaire, 
+                u.avatar, CASE WHEN c.id_user IS NOT NULL THEN 'membre' ELSE 'visiteur' END AS type_auteur FROM commentaire c LEFT JOIN user u ON c.id_user = u.id_user WHERE c.id_article = :id_article
+            ORDER BY c.date_parution DESC");
+        
         $stmt->bindParam(':id_article', $id_article, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -115,6 +123,7 @@ function addArticle($titre, $dateCreation, $dateParution, $id_user, $picture, $c
         return false;
     }
 }
+
 function addCategorie($nom, $description, $avatar, $couleur) {
     $dbh = dbconnect();
     $stmt = $dbh->prepare(" INSERT INTO categorie (nom_categorie, description, avatar, couleur)VALUES (:nom, :description, :avatar, :couleur)");
@@ -124,14 +133,14 @@ function addCategorie($nom, $description, $avatar, $couleur) {
     $stmt->bindParam(':couleur', $couleur);
     return $stmt->execute(); // renvoie true ou false
 }
-function addCommentaire($id_article, $contenu, $id_user = null, $pseudo_visiteur = null) {
+function addCommentaire($id_article, $contenu, $id_user , $pseudo_visiteur ) {   
     $dbh = dbconnect();
     try {
-        $stmt = $dbh->prepare("INSERT INTO commentaire (id_user, id_article, pseudo_visiteur, contenu, date_parution) VALUES (:id_user, :id_article, :pseudo_visiteur, :contenu, NOW())");
-        $stmt->bindValue(':id_user', $id_user, PDO::PARAM_INT);
-        $stmt->bindValue(':id_article', $id_article, PDO::PARAM_INT);
-        $stmt->bindValue(':pseudo_visiteur', $pseudo_visiteur, PDO::PARAM_STR);
-        $stmt->bindValue(':contenu', $contenu, PDO::PARAM_STR);
+        $stmt = $dbh->prepare("INSERT INTO commentaire (id_article, id_user, pseudo_visiteur, contenu, date_parution) VALUES (:id_article, :id_user, :pseudo_visiteur, :contenu, NOW())");
+        $stmt->bindParam(':id_article', $id_article, PDO::PARAM_INT);
+        $stmt->bindParam(':id_user', $id_user, PDO::PARAM_INT);
+        $stmt->bindParam(':pseudo_visiteur', $pseudo_visiteur, PDO::PARAM_STR);
+        $stmt->bindParam(':contenu', $contenu, PDO::PARAM_STR);
         return $stmt->execute();
     } catch (PDOException $e) {
         error_log("Erreur addCommentaire : " . $e->getMessage());
@@ -139,46 +148,99 @@ function addCommentaire($id_article, $contenu, $id_user = null, $pseudo_visiteur
     }
 }
 ////////////////////////////////////////////////////////////Functions update/////////////////////////////////////////////////////////////////////////
-function updateArticle($id, $titre, $contenu, $picture = null) {
+function updateArticle($id_article,$titre, $contenu, $picture) {
+    // var_dump($id_article,$titre, $contenu, $picture);
+    // die;
     $dbh = dbconnect();
     try {
-        if ($picture !== null) {
-            // Avec nouvelle image
-            $stmt = $dbh->prepare("UPDATE article SET titre = :titre, contenu = :contenu, picture = :picture WHERE id = :id");
-            $stmt->bindValue(':picture', $picture, PDO::PARAM_STR);
-        } else {
-            // Sans changer l'image
-            $stmt = $dbh->prepare("UPDATE article SET titre = :titre, contenu = :contenu WHERE id = :id");
+       if ($picture) {
+            $sql = "UPDATE article  SET titre = :titre, contenu = :contenu, picture = :picture    WHERE id_article = :id";
+               } else {
+            $sql = "UPDATE article  SET titre = :titre, contenu = :contenu WHERE id_article = :id";
+        }
+        $stmt = $dbh->prepare($sql);
+        $stmt->bindParam(':id', $id_article, PDO::PARAM_INT);
+        $stmt->bindParam(':titre', $titre);
+        $stmt->bindParam(':contenu', $contenu);
+        
+        if ($picture) {
+            $stmt->bindParam(':picture', $picture);
         }
         
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->bindValue(':titre', $titre, PDO::PARAM_STR);
-        $stmt->bindValue(':contenu', $contenu, PDO::PARAM_STR);
-        
         return $stmt->execute();
+        
     } catch (PDOException $e) {
         error_log("Erreur updateArticle : " . $e->getMessage());
         return false;
     }
 }
-//Mettre à jour les catégories d'un article
 
-function updateArticleCategories($id_article, $categories) {
+function deleteArticle($id, $cheminImage = null) {
     $dbh = dbconnect();
+    
     try {
-        // Supprimer les anciennes catégories
-        $stmt = $dbh->prepare("DELETE FROM article_categorie WHERE id_article = :id_article");
-        $stmt->bindValue(':id_article', $id_article, PDO::PARAM_INT);
+        // Démarrer une transaction
+        $dbh->beginTransaction();
+        
+        // 1. Supprimer d'abord les commentaires
+        $stmt = $dbh->prepare("DELETE FROM commentaire WHERE id_article = :id");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         
-        // Ajouter les nouvelles catégories
-        if (!empty($categories)) {
-            $stmt = $dbh->prepare("INSERT INTO article_categorie (id_article, id_categorie) VALUES (:id_article, :id_categorie)");
-            foreach ($categories as $id_categorie) {
-                $stmt->bindValue(':id_article', $id_article, PDO::PARAM_INT);
-                $stmt->bindValue(':id_categorie', $id_categorie, PDO::PARAM_INT);
-                $stmt->execute();
+        // 2. Supprimer l'article (vérifie le nom exact de ta colonne !)
+        $stmt = $dbh->prepare("DELETE FROM article WHERE id = :id");  // ou id_article
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        // Valider la transaction
+        $dbh->commit();
+        
+        // 3. Si succès en BDD, supprimer l'image du serveur
+        if (!empty($cheminImage) && is_file($cheminImage)) {
+            if (!unlink($cheminImage)) {
+                error_log("Échec de suppression de l'image : $cheminImage");
             }
+        }
+        
+        return true;
+        
+    } catch (PDOException $e) {
+        // Annuler la transaction en cas d'erreur
+        $dbh->rollBack();
+        error_log("Erreur deleteArticle : " . $e->getMessage());
+        return false;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function updateArticleCategories($idArticle, $categories) {
+    try {
+        $dbh = dbconnect();
+        
+        // 1️⃣ Suppression des anciennes catégories
+        $stmtDelete = $dbh->prepare("DELETE FROM appartenance WHERE id_article = :id_article");
+        $stmtDelete->execute([':id_article' => $idArticle]);
+        
+        // 2️⃣ Ajout des nouvelles catégories
+        $stmtInsert = $dbh->prepare("INSERT INTO appartenance (id_article, id_categorie) VALUES (:id_article, :id_categorie)");
+        foreach ($categories as $idCategorie) {
+            $stmtInsert->execute([
+                ':id_article' => $idArticle,
+                ':id_categorie' => $idCategorie
+            ]);
         }
         return true;
     } catch (PDOException $e) {
@@ -186,3 +248,17 @@ function updateArticleCategories($id_article, $categories) {
         return false;
     }
 }
+
+function deleteArticleCategories($idArticle) {
+    try {
+        $dbh = dbconnect();
+        $stmt = $dbh->prepare("DELETE FROM appartenance WHERE id_article = :id_article");
+        $stmt->execute([':id_article' => $idArticle]);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Erreur deleteArticleCategories : " . $e->getMessage());
+        return false;
+    }
+}
+
+

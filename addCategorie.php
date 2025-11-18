@@ -47,8 +47,8 @@ require_once "header.php";
                     <textarea class="form-control" name="description" id="description" rows="3"></textarea>
                 </div>
 
-                <div class="mb-3">
-                   <label for="avatar" class="form-label">Image d’illustration *</label>
+                //<div class="mb-3">
+                  //  <label for="avatar" class="form-label">Image d’illustration *</label>
                     <input type="file" class="form-control" name="avatar" id="avatar" accept="image/*" required>
                 </div>
 

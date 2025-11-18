@@ -127,37 +127,3 @@ FichierExtensionType MIMEPhoto JPEG.jpg ou .jpegimage/jpegImage PNG.pngimage/png
 
  if ($_SERVER['REQUEST_METHOD'] === 'POST') Cette ligne vérifie comment la page a été appelée : par un formulaire soumis (POST) ou par un simple clic (GET).
  La vraie bonne alternative serait !empty($_POST), mais REQUEST_METHOD reste plus clair et professionnel ! 🚀
- //////////////////////////////////////////////////////////////////////////////////////
- Que fait COALESCE ?
-C’est une fonction SQL qui renvoie la première valeur non-NULL parmi une liste d’expressions.
-
-Si toutes les valeurs sont NULL, elle renvoie NULL. 
-Pourquoi c’est utile ?
-Simplifie la gestion des données manquantes.
-Permet de définir une valeur par défaut (ex. 'Pas de téléphone').
-Très pratique pour les rapports, la préparation de données et les affichages utilisateurs.
-COALESCE, ISNULL et NVL servent tous à gérer les valeurs NULL
-
-ISNULL (SQL Server spécifique)
-
-Fonction propre à SQL Server.
-
-Remplace une seule expression NULL par une valeur donnée.
-
-Ne prend que deux arguments : l’expression et la valeur de remplacement.
-
-NVL (Oracle spécifique)
-
-Fonction propre à Oracle.
-
-Comme ISNULL, elle prend deux arguments : une expression et une valeur de remplacement.
-
-🌟 Points à retenir
-COALESCE est le plus portable car il fait partie de la norme SQL.
-
-ISNULL est plus limité mais parfois plus performant dans SQL Server.
-
-NVL est l’équivalent d’ISNULL dans Oracle.
-
-Pour un code réutilisable entre plusieurs bases, privilégiez COALESCE.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////

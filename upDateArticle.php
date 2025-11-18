@@ -1,135 +1,209 @@
 <?php
 session_start();
 require_once "function.php";
-require_once "header.php";
 
-// Vérifier que l'utilisateur est connecté et est auteur
-if (!isset($_SESSION['user']) || $_SESSION['user'] ['type'] !== 'auteur') {
+// Protection auteur
+if (!isset($_SESSION['user']) || $_SESSION['user']['type'] !== 'auteur') {
     header('Location: index.php');
     exit;
 }
 
-// Vérifier si un ID est passé
-if (!isset($_GET['id'])) {
-    header('Location: index.php');
+$error = '';
+$success = '';
+
+// Récupération de l'article
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    header('Location: myArticles.php');
     exit;
 }
 
-$id = (int) $_GET['id'];
-$post = getArticleById($id);
+$id = (int)$_GET['id'];
+$article = getArticleById($id);
+// ✅ Récupération des catégories existantes de l'article
+$articleCategories = getCategoriesByArticle($id);
+$selectedCategories = array_column($articleCategories, 'id_categorie');
 
-// Vérifier que l'article existe
-if (!$post) {
-    echo "<div class='alert alert-danger text-center'>Article introuvable.</div>";
-    exit;
-}
-
-// Récupérer toutes les catégories disponibles
+// Récupération de TOUTES les catégories disponibles
 $allCategories = getAllCategories();
 
-// Récupérer les catégories actuelles de l'article
-$currentCategories = getCategoriesByArticle($id);
-$currentCategoryIds = array_column($currentCategories, 'id');
+// Vérifier que l'article existe
+if (!$article) {
+    header('Location: myArticles.php?error=notfound');
+    exit;
+}
+
+// Vérifier que c'est bien l'auteur de l'article
+if ($article['auteur'] !== $_SESSION['user']['pseudo']) {
+    header('Location: myArticles.php?error=unauthorized');
+    exit;
+}
+
+if (isset($_POST['submit'])) {
+    // Validation des champs obligatoires
+    // var_dump($_POST);
+    // die;
+    if (
+        empty($_POST['titre']) ||
+        empty($_POST['dateCreation']) ||
+        empty($_POST['contenu'])
+    ) {
+        $error = "Tous les champs sont obligatoires.";
+    } else {
+        $uploadPath = $article['picture']; // On garde l'ancienne image par défaut
+        
+        // Si une nouvelle image est uploadée
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $image = $_FILES['image'];
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $maxSize = 5 * 1024 * 1024; // 5 Mo
+
+            // Validation du type et de la taille
+            if (!in_array($image['type'], $allowedTypes)) {
+                $error = "Format d'image non autorisé.";
+            } elseif ($image['size'] > $maxSize) {
+                $error = "L'image est trop volumineuse (max 5 Mo).";
+            } else {
+                // Préparation du nom et du chemin
+                $extension = pathinfo($image['name'], PATHINFO_EXTENSION);
+                $newFileName = uniqid('article_', true) . '.' . $extension;
+                $uploadDir = 'uploads/articles/';
+                
+                // Créer le dossier s'il n'existe pas
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                
+                $uploadPath = $uploadDir . $newFileName;
+                
+                // Déplacement du nouveau fichier
+                if (move_uploaded_file($image['tmp_name'], $uploadPath)) {
+                    // Supprimer l'ancienne image
+                    if (file_exists($article['chemin_image'])) {
+                        unlink($article['chemin_image']);
+                    }
+                } else {
+                    $error = "Erreur lors de l'upload de l'image.";
+                }
+            }
+        }
+        
+        // Si pas d'erreur, mise à jour en base
+        if (empty($error)) {
+            // var_dump($_POST['contenu']);
+            // die;   
+            $updated = updateArticle(
+                $id,
+                $_POST['titre'],
+                $_POST['contenu'],
+                $uploadPath,
+                
+            );
+            updateArticleCategories($id, $_POST['categories']);
+            if ($updated) {
+                header("Location: singleArticle.php?id=$id&success=updated");
+                exit;
+            } else {
+                $error = "Erreur lors de la modification de l'article.";
+            }
+             
+        }
+    }
+}
+
+require_once "header.php";
 ?>
 
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <h2 class="fw-bold mb-4">
-                <i class="bi bi-pencil-square"></i> Modifier l'article
-            </h2>
+<div class="container mt-5">
+    <div class="card shadow-sm border-start border-warning rounded-4" style="max-width: 700px; margin: auto;">
+        <div class="card-body">
+            <h4 class="card-title text-center mb-4">✏️ Modifier l'Article</h4>
 
-            <?php if (isset($_GET['success'])): ?>
-                <div class="alert alert-success alert-dismissible fade show">
-                    <i class="bi bi-check-circle"></i> Article modifié avec succès !
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger text-center"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
 
-            <?php if (isset($_GET['error'])): ?>
-                <div class="alert alert-danger alert-dismissible fade show">
-                    <i class="bi bi-exclamation-triangle"></i> 
-                    <?php 
-                    switch($_GET['error']) {
-                        case 'empty': echo "Tous les champs sont obligatoires."; break;
-                        case 'upload': echo "Erreur lors de l'upload de l'image."; break;
-                        case 'failed': echo "Erreur lors de la modification."; break;
-                        default: echo "Une erreur est survenue.";
-                    }
-                    ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            <?php endif; ?>
-
-            <form method="post" action="updateArticle.php" enctype="multipart/form-data">
-                <input type="hidden" name="id" value="<?= $id ?>">
-
-                <!-- Titre -->
+            <form method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
-                    <label for="titre" class="form-label">Titre <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="titre" name="titre" value="<?= htmlspecialchars($post['titre']) ?>" required maxlength="200">
+                    <label for="titre" class="form-label">Titre de l'article *</label>
+                    <input type="text" class="form-control" id="titre" name="titre" required maxlength="255" value="<?= htmlspecialchars($_POST['titre'] ?? $article['titre']) ?>">
                 </div>
 
-                <!-- Contenu -->
+                <!-- Date de création (modifiable) -->
                 <div class="mb-3">
-                    <label for="contenu" class="form-label">Contenu <span class="text-danger">*</span></label>
-                    <textarea name="contenu" id="contenu" rows="10" class="form-control" required><?= htmlspecialchars($post['contenu']) ?></textarea>
+                    <label for="dateCreation" class="form-label">
+                        Date de création *
+                        <small class="text-muted">(Quand avez-vous rédigé cet article ?)</small>
+                    </label>
+                    <input type="date" class="form-control" id="dateCreation" name="dateCreation" required max="<?= date('Y-m-d') ?>" value="<?= $_POST['dateCreation'] ?? $article['date_creation'] ?>">
+                    <small class="form-text text-muted">La date ne peut pas être dans le futur</small>
+                </div>
+
+                <!-- Date de parution (non modifiable) -->
+                <div class="mb-3">
+                    <label for="dateParutionDisplay" class="form-label">
+                        Date de parution
+                        <small class="text-muted">(Non modifiable)</small>
+                    </label>
+                    <input type="text" id="dateParutionDisplay" class="form-control" value="<?= date('d/m/Y', strtotime($article['date_parution'])) ?>" disabled>
+                    <small class="form-text text-muted">La date de publication reste inchangée</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="auteur" class="form-label">Auteur</label>
+                    <input type="text" id="auteur" class="form-control" value="<?= htmlspecialchars($_SESSION['user']['pseudo']) ?>" disabled>
+                </div>
+
+                <div class="mb-3">
+                    <label for="contenu" class="form-label">Contenu de l'article *</label>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="10" required><?= htmlspecialchars ($article['contenu']) ?></textarea>
                 </div>
 
                 <!-- Image actuelle -->
-                <?php if (!empty($post['picture'])): ?>
-                    <div class="mb-3">
-                        <label class="form-label">Image actuelle</label>
-                        <div class="border rounded p-2">
-                            <img src="<?= htmlspecialchars($post['picture']) ?>" 
-                                 alt="Image actuelle" 
-                                 class="img-fluid" 
-                                 style="max-height: 200px;">
-                        </div>
+                <div class="mb-3">
+                    <label class="form-label">Image actuelle</label>
+                    <div class="mb-2">
+                        <img src="<?= htmlspecialchars($article['picture']) ?>" alt="Image actuelle" class="img-fluid">
                     </div>
-                <?php endif; ?>
+                </div>
 
                 <!-- Nouvelle image (optionnelle) -->
                 <div class="mb-3">
-                    <label for="picture" class="form-label">
-                        Changer l'image <small class="text-muted">(optionnel)</small>
+                    <label for="image" class="form-label">
+                        Nouvelle image <small class="text-muted">(Optionnel)</small>
                     </label>
-                    <input type="file" 
-                           class="form-control" 
-                           id="picture" 
-                           name="picture" 
-                           accept="image/jpeg,image/png,image/jpg,image/webp">
-                    <small class="text-muted">Formats acceptés : JPG, PNG, WEBP (max 2 Mo)</small>
+                    <input type="file" class="form-control" id="image" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
+                    <small class="form-text text-muted">Formats acceptés : JPG, PNG, GIF, WEBP (Max : 5 Mo)</small>
                 </div>
-
-                <!-- Catégories -->
-                <div class="mb-4">
-                    <label class="form-label">Catégories <span class="text-danger">*</span></label>
-                    <div class="border rounded p-3">
+                <div class="mb-3">
+                    <label class="form-label">Catégories *</label>
+                    <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
                         <?php foreach ($allCategories as $categorie): ?>
-                            <div class="form-check">
-                                <input class="form-check-input" 
-                                       type="checkbox" 
-                                       name="categories[]" 
-                                       value="<?= $categorie['id'] ?>" 
-                                       id="cat<?= $categorie['id'] ?>"
-                                       <?= in_array($categorie['id'], $currentCategoryIds) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="cat<?= $categorie['id'] ?>">
-                                    <?= htmlspecialchars($categorie['nom']) ?>
+                            <div class="form-check mb-2">
+                                <input 
+                                    class="form-check-input" 
+                                    type="checkbox" 
+                                    name="categories[]" 
+                                    value="<?= $categorie['id_categorie'] ?>" 
+                                    id="cat_<?= $categorie['id_categorie'] ?>"
+                                    <?= in_array($categorie['id_categorie'], $selectedCategories) ? 'checked' : '' ?>
+                                >
+                                <label class="form-check-label" for="cat_<?= $categorie['id_categorie'] ?>">
+                                    <?php if (!empty($categorie['avatar'])): ?>
+                                        <img src="<?= htmlspecialchars($categorie['avatar']) ?>" alt="" style="width: 20px; height: 20px; object-fit: cover; border-radius: 3px;">
+                                    <?php endif; ?>
+                                    <strong><?= htmlspecialchars($categorie['nom_categorie']) ?></strong>
                                 </label>
                             </div>
                         <?php endforeach; ?>
-                    </div>
-                    <small class="text-muted">Sélectionnez au moins une catégorie</small>
+                   </div>
                 </div>
 
-                <!-- Boutons -->
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-lg"></i> Enregistrer les modifications
+                <div class="d-grid gap-2">
+                    <button type="submit" name="submit" class="btn btn-warning">
+                        💾 Enregistrer les modifications
                     </button>
-                    <a href="singleArticle.php?id=<?= $id ?>" class="btn btn-secondary">
-                        <i class="bi bi-x-lg"></i> Annuler
+                    <a href="singleArticle.php?id=<?= $id ?>" class="btn btn-outline-secondary">
+                        Annuler
                     </a>
                 </div>
             </form>
