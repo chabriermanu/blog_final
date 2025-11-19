@@ -141,3 +141,16 @@ body {
         font-size: 1.5rem !important;
     }
 }
+.rotatey-loop {
+  animation: rotateYLoop 8s linear infinite;
+  transform-style: preserve-3d;
+}
+
+@keyframes rotateYLoop {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}

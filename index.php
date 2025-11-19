@@ -38,9 +38,9 @@ require_once "header.php";
                                         <div class="card article-card shadow-lg border-0">
                                             <div class="card-img-container">
                                                 <?php if (!empty($post['picture'])): ?>
-                                                    <img src="<?= htmlspecialchars($post['picture']) ?>"class="card-img-top article-img" 
-                                                     style="max-height: 500px; object-fit: contain;"> alt="<?= htmlspecialchars($post['titre']) ?>">
-                                                <?php else: ?>
+                                                  <img src="<?= htmlspecialchars($post['picture']) ?>" class="card-img-top article-img rotatey-loop" 
+                                                  style="max-height: 500px; object-fit: contain;" alt="<?= htmlspecialchars($post['titre']) ?>">
+                                                  <?php else: ?>
                                                     <div class="bg-gradient bg-secondary article-img d-flex align-items-center justify-content-center">
                                                         <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
                                                     </div>
