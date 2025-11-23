@@ -4,9 +4,9 @@ Projet ECF - Développeur Web et Web Mobile @ AFPA Saint-Jean-de-Védas
 Validation des compétences CRUD et développement PHP/MySQL
 
 Blog personnel dédié aux séries télévisées et dessins animés qui ont marqué mon enfance (années 80 à 2000). Ce projet constitue mon évaluation de certification ECF et valide ma maîtrise du CRUD en PHP/MySQL.
-Afficher l'image
-Afficher l'image
-Afficher l'image
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=flat-square&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
 
 🎯 Objectifs du projet ECF
 Ce projet valide l'ensemble des compétences acquises en formation, avec un focus particulier sur :
