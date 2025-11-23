@@ -159,4 +159,4 @@ Projet réalisé dans un cadre pédagogique (AFPA).
 
 ⭐ N'hésitez pas à explorer le code et à me faire vos retours !
 
-Dernière mise à jour : Novembre 2024
+Dernière mise à jour : Novembre 2025
